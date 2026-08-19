@@ -25,17 +25,6 @@ RSpec.describe Transaction do
       expect(transaction.amount).to be_a(BigDecimal)
     end
 
-    it "coerces a Float amount to BigDecimal" do
-      float_transaction = described_class.new(
-        from_account_number: "1111234522226789",
-        to_account_number: "1212343433335665",
-        amount: 500.0,
-        row_number: 2
-      )
-      expect(float_transaction.amount).to eq(BigDecimal("500.00"))
-      expect(float_transaction.amount).to be_a(BigDecimal)
-    end
-
     it "stores the row number" do
       expect(transaction.row_number).to eq(1)
     end

@@ -128,8 +128,8 @@ RSpec.describe Account do
     end
 
     context "with a non-positive amount" do
-it "rejects a zero amount" do
-      expect { account.credit(BigDecimal("0")) }
+      it "rejects a zero amount" do
+        expect { account.credit(BigDecimal("0")) }
         .to raise_error(ArgumentError, /positive/)
       expect(account.balance).to eq(balance)
     end
