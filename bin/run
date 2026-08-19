@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift File.expand_path("../lib", __dir__)
+
+require "loaders/loader"
+require "loaders/csv_account_loader"
+require "loaders/csv_transaction_loader"
+require "models/account"
+require "models/transaction"
+require "models/transaction_error"
+require "models/transaction_result"
+require "repositories/account_repository"
+require "services/transaction_processor"
+require "reporters/reporter"
+
+accounts_path = ARGV[0] || File.expand_path("../data/mable_account_balances.csv", __dir__)
+transactions_path = ARGV[1] || File.expand_path("../data/mable_transactions.csv", __dir__)
+
+repository = AccountRepository.new
+CsvAccountLoader.new(accounts_path).load.each { |account| repository.add(account) }
+
+processor = TransactionProcessor.new(repository)
+results = CsvTransactionLoader.new(transactions_path).load.map do |transaction|
+  processor.process(transaction)
+end
+
+reporter = Reporter.new(repository, results)
+reporter.print_results
+reporter.print_balances
