@@ -1,7 +1,6 @@
 require "spec_helper"
 require "models/account"
 require "models/transaction"
-require "models/transaction_error"
 require "models/transaction_result"
 require "repositories/account_repository"
 require "services/transaction_processor"
@@ -41,7 +40,7 @@ RSpec.describe TransactionProcessor do
       it "returns a SENDER_NOT_FOUND failure without mutating balances" do
         result = processor.process(build_transaction(from: "9999999999999999", amount: "100.00"))
         expect(result.success?).to be(false)
-        expect(result.error_code).to eq(TransactionError::SENDER_NOT_FOUND)
+        expect(result.error_code).to eq(TransactionResult::SENDER_NOT_FOUND)
         expect(sender.balance).to eq(BigDecimal("5000.00"))
         expect(receiver.balance).to eq(BigDecimal("1200.00"))
       end
@@ -51,7 +50,7 @@ RSpec.describe TransactionProcessor do
       it "returns a RECEIVER_NOT_FOUND failure without mutating balances" do
         result = processor.process(build_transaction(to: "9999999999999999", amount: "100.00"))
         expect(result.success?).to be(false)
-        expect(result.error_code).to eq(TransactionError::RECEIVER_NOT_FOUND)
+        expect(result.error_code).to eq(TransactionResult::RECEIVER_NOT_FOUND)
         expect(sender.balance).to eq(BigDecimal("5000.00"))
         expect(receiver.balance).to eq(BigDecimal("1200.00"))
       end
@@ -61,7 +60,7 @@ RSpec.describe TransactionProcessor do
       it "returns a SELF_TRANSFER failure without mutating balances" do
         result = processor.process(build_transaction(from: sender.number, to: sender.number, amount: "100.00"))
         expect(result.success?).to be(false)
-        expect(result.error_code).to eq(TransactionError::SELF_TRANSFER)
+        expect(result.error_code).to eq(TransactionResult::SELF_TRANSFER)
         expect(sender.balance).to eq(BigDecimal("5000.00"))
       end
     end
@@ -70,7 +69,7 @@ RSpec.describe TransactionProcessor do
       it "returns an INVALID_AMOUNT failure for zero without mutating balances" do
         result = processor.process(build_transaction(amount: "0"))
         expect(result.success?).to be(false)
-        expect(result.error_code).to eq(TransactionError::INVALID_AMOUNT)
+        expect(result.error_code).to eq(TransactionResult::INVALID_AMOUNT)
         expect(sender.balance).to eq(BigDecimal("5000.00"))
         expect(receiver.balance).to eq(BigDecimal("1200.00"))
       end
@@ -78,7 +77,7 @@ RSpec.describe TransactionProcessor do
       it "returns an INVALID_AMOUNT failure for a negative amount without mutating balances" do
         result = processor.process(build_transaction(amount: "-100.00"))
         expect(result.success?).to be(false)
-        expect(result.error_code).to eq(TransactionError::INVALID_AMOUNT)
+        expect(result.error_code).to eq(TransactionResult::INVALID_AMOUNT)
         expect(sender.balance).to eq(BigDecimal("5000.00"))
         expect(receiver.balance).to eq(BigDecimal("1200.00"))
       end
@@ -88,7 +87,7 @@ RSpec.describe TransactionProcessor do
       it "returns an INSUFFICIENT_FUNDS failure without mutating balances" do
         result = processor.process(build_transaction(amount: "5000.01"))
         expect(result.success?).to be(false)
-        expect(result.error_code).to eq(TransactionError::INSUFFICIENT_FUNDS)
+        expect(result.error_code).to eq(TransactionResult::INSUFFICIENT_FUNDS)
         expect(sender.balance).to eq(BigDecimal("5000.00"))
         expect(receiver.balance).to eq(BigDecimal("1200.00"))
       end

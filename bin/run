@@ -2,13 +2,10 @@
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
-require "loaders/loader"
 require "loaders/csv_account_loader"
 require "loaders/csv_transaction_loader"
 require "models/account"
 require "models/transaction"
-require "models/transaction_error"
-require "models/transaction_result"
 require "repositories/account_repository"
 require "services/transaction_processor"
 require "reporters/reporter"
@@ -17,13 +14,22 @@ accounts_path = ARGV[0] || File.expand_path("../data/mable_account_balances.csv"
 transactions_path = ARGV[1] || File.expand_path("../data/mable_transactions.csv", __dir__)
 
 repository = AccountRepository.new
-CsvAccountLoader.new(accounts_path).load.each { |account| repository.add(account) }
-
-processor = TransactionProcessor.new(repository)
-results = CsvTransactionLoader.new(transactions_path).load.map do |transaction|
-  processor.process(transaction)
+CsvAccountLoader.new(accounts_path).load.each do |row|
+  repository.add(Account.new(number: row[:number], balance: row[:balance]))
 end
 
-reporter = Reporter.new(repository, results)
-reporter.print_results
-reporter.print_balances
+reporter = Reporter.new
+
+processor = TransactionProcessor.new(repository)
+CsvTransactionLoader.new(transactions_path).load.map do |row|
+  transaction = Transaction.new(
+    from_account_number: row[:from_account_number],
+    to_account_number:   row[:to_account_number],
+    amount:              row[:amount],
+    row_number:          row[:row_number]
+  )
+  result = processor.process(transaction)
+  reporter.print_results(result)
+end
+
+reporter.print_balances(repository.all)

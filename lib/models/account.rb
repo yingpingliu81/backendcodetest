@@ -16,23 +16,19 @@ class Account
   end
 
   def sufficient_funds?(amount)
-    amount = MoneyUtils.coerce_decimal(amount)
-    MoneyUtils.validate_amount!(amount)
+    amount = coerce_and_validate!(amount)
     @balance >= amount
   end
 
   def debit(amount)
-    amount = MoneyUtils.coerce_decimal(amount)
-    MoneyUtils.validate_amount!(amount)
     raise InsufficientFundsError,
-          "insufficient funds: balance #{@balance}, requested #{amount}" unless @balance >= amount
+          "insufficient funds: balance #{@balance}" unless sufficient_funds?(amount)
 
-    @balance -= amount
+    @balance -= MoneyUtils.coerce_decimal(amount)
   end
 
   def credit(amount)
-    amount = MoneyUtils.coerce_decimal(amount)
-    MoneyUtils.validate_amount!(amount)
+    amount = coerce_and_validate!(amount)
     @balance += amount
   end
 
@@ -48,5 +44,11 @@ class Account
 
   def validate_balance!
     raise ArgumentError, "balance cannot be negative" if @balance.negative?
+  end
+
+  def coerce_and_validate!(amount)
+    amount = MoneyUtils.coerce_decimal(amount)
+    MoneyUtils.validate_amount!(amount)
+    amount
   end
 end

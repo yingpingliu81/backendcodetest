@@ -1,7 +1,6 @@
 require "spec_helper"
 require "loaders/loader"
 require "loaders/csv_transaction_loader"
-require "models/transaction"
 
 RSpec.describe CsvTransactionLoader do
   let(:fixture_path) { File.expand_path("../fixtures/transactions.csv", __dir__) }
@@ -14,32 +13,31 @@ RSpec.describe CsvTransactionLoader do
       expect(loader.load).to be_a(Enumerator)
     end
 
-    it "loads the correct number of transactions" do
+    it "loads the correct number of rows" do
       expect(loader.load.count).to eq(3)
     end
 
     it "assigns 1-based row numbers in file order" do
-      expect(loader.load.map(&:row_number)).to eq([1, 2, 3])
+      expect(loader.load.map { |row| row[:row_number] }).to eq([1, 2, 3])
     end
 
     it "loads each from/to account number" do
-      transactions = loader.load
-      expect(transactions.map(&:from_account_number)).to contain_exactly(
+      rows = loader.load.to_a
+      expect(rows.map { |r| r[:from_account_number] }).to contain_exactly(
         "1111234522226789",
         "3212343433335755",
         "3212343433335755"
       )
-      expect(transactions.map(&:to_account_number)).to contain_exactly(
+      expect(rows.map { |r| r[:to_account_number] }).to contain_exactly(
         "1212343433335665",
         "2222123433331212",
         "1111234522226789"
       )
     end
 
-    it "loads amounts as BigDecimal" do
-      transaction = loader.load.first
-      expect(transaction.amount).to eq(BigDecimal("500.00"))
-      expect(transaction.amount).to be_a(BigDecimal)
+    it "loads the amount as a raw string from the CSV" do
+      row = loader.load.first
+      expect(row[:amount]).to eq("500.00")
     end
 
     it "raises Errno::ENOENT when the missing file is enumerated" do
